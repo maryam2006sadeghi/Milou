@@ -23,7 +23,8 @@
   <property name="hibernate.highlight_sql">true</property>
   <!-- Mappings -->
    <mapping class="aut.ap.model.User"/>
-   <mapping class="aut.ap.service.UserService"/>
+   <mapping class="aut.ap.model.Email"/>
+   <mapping class="aut.ap.model.EmailRecipient"/>
 
   </session-factory>
  </hibernate-configuration>
