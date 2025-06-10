@@ -48,6 +48,7 @@ public class Main {
 
                 User result = UserService.logIn(email, password);
                 if (result != null) {
+                    EmailService.unreadEmails(email);
                     System.out.print("[S]end, [V]iew, [R]eply, [F]orward: \n");
                     String choice = scn.nextLine().trim().toLowerCase();
 
@@ -78,7 +79,8 @@ public class Main {
 
                             boolean result1 = EmailService.sendEmail(recipients, subject, Body, email);
                             if (result1) {
-                                System.out.println("Email sent successfully!");
+                                System.out.println("Successfully sent your email.\n");
+                                System.out.print("Code: " + EmailService.code);
                             } else {
                                 System.err.println("Failed to send email. Please check recipient addresses or try again.");
                             }

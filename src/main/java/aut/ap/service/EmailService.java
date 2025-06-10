@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Random;
 
 public class EmailService {
+    public static String code;
+
     public static boolean sendEmail(String[] recipients, String subject, String body, String senderemail) {
         if (recipients == null || recipients.length == 0) {
             return false;
@@ -26,12 +28,12 @@ public class EmailService {
                         .getSingleResult();
 
                 LocalDate date = LocalDate.now();
-                String generatedcode;
+                String generatedCode;
                 do {
-                    generatedcode = generateRandomCode();
-                } while (codeExists(generatedcode));
+                    generatedCode = generateRandomCode();
+                } while (codeExists(generatedCode));
 
-                Email newemail = new Email(sender, subject, body, date, generatedcode, null);
+                Email newemail = new Email(sender, subject, body, date, generatedCode, null);
                 session.persist(newemail);
 
                 for (String email : recipients) {
@@ -42,6 +44,7 @@ public class EmailService {
                     EmailRecipient emailRecipient = new EmailRecipient(newemail, user);
                     session.persist(emailRecipient);
                 }
+                code = generatedCode;
             });
             return true;
         } catch (NoResultException e) {
@@ -53,6 +56,23 @@ public class EmailService {
         } catch (Exception e) {
             System.err.println("Unexpected error: " + e.getMessage());
             return false;
+        }
+    }
+
+    public static void unreadEmails(String email) {
+        List<Email> unReadEmails = SingletonSessionFactory.get().fromTransaction(session ->
+                session.createNativeQuery("select e.* from emails e " +
+                                        "left join email_recipients er on e.id = er.email_id " +
+                                        "left join users u on er.recipient_id = u.id " +
+                                        "where u.email = :givenEmail and er.is_read = false "
+                                        , Email.class)
+                        .setParameter("givenEmail", email)
+                        .getResultList()
+        );
+
+        System.out.println("Unread Emails:");
+        for (Email unRead : unReadEmails) {
+            System.out.println("+" + unRead.toString());
         }
     }
 
