@@ -7,11 +7,12 @@ import aut.ap.model.User;
 import jakarta.persistence.NoResultException;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
 public class EmailService {
-    public static String code;
+    public static String outputCode;
 
     public static boolean sendEmail(String[] recipients, String subject, String body, String senderemail) {
         if (recipients == null || recipients.length == 0) {
@@ -44,7 +45,7 @@ public class EmailService {
                     EmailRecipient emailRecipient = new EmailRecipient(newemail, user);
                     session.persist(emailRecipient);
                 }
-                code = generatedCode;
+                outputCode = generatedCode;
             });
             return true;
         } catch (NoResultException e) {
@@ -65,7 +66,7 @@ public class EmailService {
                                         "left join email_recipients er on e.id = er.email_id " +
                                         "left join users u on er.recipient_id = u.id " +
                                         "where u.email = :givenEmail and er.is_read = false "
-                                        , Email.class)
+                                , Email.class)
                         .setParameter("givenEmail", email)
                         .getResultList()
         );
@@ -73,6 +74,117 @@ public class EmailService {
         System.out.println("Unread Emails:");
         for (Email unRead : unReadEmails) {
             System.out.println("+" + unRead.toString());
+        }
+    }
+
+    public static boolean reply(String senderEmail, String code, String body) {
+        try {
+            SingletonSessionFactory.get().inTransaction(session -> {
+                Email originalEmail = session.createQuery(
+                                "from Email where code = :givenCode", Email.class)
+                        .setParameter("givenCode", code)
+                        .getSingleResult();
+
+                if (originalEmail == null) {
+                    throw new RuntimeException("Original email not found for code: " + code);
+                }
+
+                User newSender = session.createQuery(
+                                "from User where email = :givenEmail", User.class)
+                        .setParameter("givenEmail", senderEmail)
+                        .getSingleResult();
+
+                List<User> recipients = session.createQuery(
+                                "select u from User u " +
+                                        "join EmailRecipient er on er.recipient = u " +
+                                        "join Email e on e = er.email " +
+                                        "where e.code = :givenCode", User.class)
+                        .setParameter("givenCode", code)
+                        .getResultList();
+
+                String replySubject = "[RE] " + originalEmail.getSubject();
+
+                String generatedCode;
+                do {
+                    generatedCode = generateRandomCode();
+                } while (codeExists(generatedCode));
+
+                Email replyEmail = new Email(newSender, replySubject, body, LocalDate.now(), generatedCode, originalEmail);
+                replyEmail.setReply(true);
+                session.persist(replyEmail);
+
+                EmailRecipient originalRecipient = new EmailRecipient(replyEmail, originalEmail.getSender());
+                session.persist(originalRecipient);
+
+                for (User user : recipients) {
+                    if (!user.equals(newSender)) {
+                        EmailRecipient emailRecipient = new EmailRecipient(replyEmail, user);
+                        session.persist(emailRecipient);
+                    }
+                }
+                outputCode = generatedCode;
+            });
+            return true;
+        } catch (NoResultException e) {
+            System.err.println("User or email not found: " + e.getMessage());
+            return false;
+        } catch (jakarta.persistence.PersistenceException e) {
+            System.err.println("Database error: " + e.getMessage());
+            return false;
+        } catch (Exception e) {
+            System.err.println("Unexpected error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static boolean forward(String code, String[] recipients, String senderEmail) {
+        try {
+            SingletonSessionFactory.get().inTransaction(session -> {
+                Email originalEmail = session.createQuery(
+                                "from Email where code = :givenCode", Email.class)
+                        .setParameter("givenCode", code)
+                        .getSingleResult();
+
+                if (originalEmail == null) {
+                    throw new RuntimeException("Original email not found for code: " + code);
+                }
+
+                User newSender = session.createQuery(
+                                "from User where email = :givenEmail", User.class)
+                        .setParameter("givenEmail", senderEmail)
+                        .getSingleResult();
+
+                String replySubject = "[Fw] " + originalEmail.getSubject();
+
+                String generatedCode;
+                do {
+                    generatedCode = generateRandomCode();
+                } while (codeExists(generatedCode));
+
+                Email forwardEmail = new Email(newSender, replySubject, originalEmail.getBody(), LocalDate.now(), generatedCode, originalEmail);
+                forwardEmail.setForward(true);
+                session.persist(forwardEmail);
+
+                for (String email : recipients) {
+                    User user = session.createQuery("from User where email = :givenemail", User.class)
+                            .setParameter("givenemail", email)
+                            .getSingleResult();
+
+                    EmailRecipient emailRecipient = new EmailRecipient(forwardEmail, user);
+                    session.persist(emailRecipient);
+                }
+                outputCode = generatedCode;
+            });
+            return true;
+        } catch (NoResultException e) {
+            System.err.println("User or email not found: " + e.getMessage());
+            return false;
+        } catch (jakarta.persistence.PersistenceException e) {
+            System.err.println("Database error: " + e.getMessage());
+            return false;
+        } catch (Exception e) {
+            System.err.println("Unexpected error: " + e.getMessage());
+            return false;
         }
     }
 
