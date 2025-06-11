@@ -80,9 +80,9 @@ public class Main {
                             boolean result1 = EmailService.sendEmail(recipients, subject, Body, email);
                             if (result1) {
                                 System.out.println("Successfully sent your email.\n");
-                                System.out.print("Code: " + EmailService.outputCode + "\n");
+                                System.out.print("Code: " + EmailService.outputCode);
                             } else {
-                                System.err.println("Failed to send email. Please check recipient addresses or try again.\n");
+                                System.err.println("Failed to send email. Please check recipient addresses or try again.");
                             }
                         }
                         case "r", "reply" -> {
@@ -120,13 +120,12 @@ public class Main {
                         }
                     }
                 }
+            }
 
-                System.out.println("Do you want to continue? [Y/N]");
-                String continueChoice = scn.nextLine().toLowerCase(Locale.ENGLISH);
-                if (continueChoice.equals("n")) {
-                    running = false;
-                }
-
+            System.out.println("Do you want to continue? [Y/N]");
+            String continueChoice = scn.nextLine().toLowerCase(Locale.ENGLISH);
+            if (continueChoice.equals("n")) {
+                running = false;
             } else if (!running) {
                 System.out.println("Goodbye!");
             }
