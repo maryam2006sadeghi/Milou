@@ -8,7 +8,7 @@ create table emails (
     code varchar(6) not null unique ,
     is_reply boolean default false,
     is_forward boolean default false,
-    parent_email_id int unique ,
+    parent_email_id int,
     foreign key (sender_id) references users(id),
     foreign key (parent_email_id) references emails(id)
 );

@@ -80,9 +80,22 @@ public class Main {
                             boolean result1 = EmailService.sendEmail(recipients, subject, Body, email);
                             if (result1) {
                                 System.out.println("Successfully sent your email.\n");
-                                System.out.print("Code: " + EmailService.code);
+                                System.out.print("Code: " + EmailService.outputCode + "\n");
                             } else {
-                                System.err.println("Failed to send email. Please check recipient addresses or try again.");
+                                System.err.println("Failed to send email. Please check recipient addresses or try again.\n");
+                            }
+                        }
+                        case "r", "reply" -> {
+                            System.out.print("Code\n");
+                            String code = scn.nextLine();
+                            System.out.print("Body: \n");
+                            String body = scn.nextLine();
+                            boolean result2 = EmailService.reply(email, code, body);
+                            if (result2) {
+                                System.out.println("Successfully sent your reply to email " + code + "\n");
+                                System.out.print("Code: " + EmailService.outputCode + "\n");
+                            } else {
+                                System.err.println("Failed to reply email. Please check the code or try again\n");
                             }
                         }
                     }
