@@ -65,7 +65,8 @@ public class EmailService {
                 session.createNativeQuery("select e.* from emails e " +
                                         "left join email_recipients er on e.id = er.email_id " +
                                         "left join users u on er.recipient_id = u.id " +
-                                        "where u.email = :givenEmail and er.is_read = false "
+                                        "where u.email = :givenEmail and er.is_read = false " +
+                                        "order by e.date desc"
                                 , Email.class)
                         .setParameter("givenEmail", email)
                         .getResultList()
@@ -73,6 +74,41 @@ public class EmailService {
 
         System.out.println("Unread Emails:");
         for (Email unRead : unReadEmails) {
+            System.out.println("+" + unRead.toString());
+        }
+    }
+
+    public static void AllEmails(String email) {
+        List<Email> AllEmails = SingletonSessionFactory.get().fromTransaction(session ->
+                session.createNativeQuery("select e.* from emails e " +
+                                        "left join email_recipients er on e.id = er.email_id " +
+                                        "left join users u on er.recipient_id = u.id " +
+                                        "where u.email = :givenEmail " +
+                                        "order by e.date desc"
+                                , Email.class)
+                        .setParameter("givenEmail", email)
+                        .getResultList()
+        );
+
+        System.out.println("All Emails:");
+        for (Email unRead : AllEmails) {
+            System.out.println("+" + unRead.toString());
+        }
+    }
+
+    public static void sentEmails(String email) {
+        List<Email> sentEmails = SingletonSessionFactory.get().fromTransaction(session ->
+                session.createNativeQuery("select e.* from emails e " +
+                                        "left join users u on e.sender_id = u.id " +
+                                        "where u.email = :givenEmail " +
+                                        "order by e.date desc"
+                                , Email.class)
+                        .setParameter("givenEmail", email)
+                        .getResultList()
+        );
+
+        System.out.println("Sent Emails:");
+        for (Email unRead : sentEmails) {
             System.out.println("+" + unRead.toString());
         }
     }

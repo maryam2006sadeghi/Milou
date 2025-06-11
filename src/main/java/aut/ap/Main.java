@@ -118,6 +118,21 @@ public class Main {
                                 System.err.println("Failed to forward email. Please check the code or try again\n");
                             }
                         }
+                        case "v", "view" -> {
+                            System.out.println("[A]ll emails, [U]nread emails, [S]ent emails, Read by [C]ode:");
+                            String input = scn.nextLine().trim().toLowerCase();
+                            switch (input) {
+                                case "a", "all emails" -> {
+                                    EmailService.AllEmails(email);
+                                }
+                                case "u", "unread emails" -> {
+                                    EmailService.unreadEmails(email);
+                                }
+                                case "s", "sent emails" -> {
+                                    EmailService.sentEmails(email);
+                                }
+                            }
+                        }
                     }
                 }
 
