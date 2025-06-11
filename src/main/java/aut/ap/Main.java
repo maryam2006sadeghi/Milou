@@ -98,6 +98,26 @@ public class Main {
                                 System.err.println("Failed to reply email. Please check the code or try again\n");
                             }
                         }
+                        case "f", "forward" -> {
+                            System.out.print("Code\n");
+                            String code = scn.nextLine();
+                            System.out.print("Recipient(s)\n");
+                            String recipientInput = scn.nextLine();
+                            String[] recipients = recipientInput.split(",");
+                            for (int i = 0; i < recipients.length; i++) {
+                                recipients[i] = recipients[i].trim();
+                                if (!recipients[i].endsWith("@gmail.com")) {
+                                    recipients[i] = recipients[i] + "@gmail.com";
+                                }
+                            }
+                            boolean result3 = EmailService.forward(code, recipients, email);
+                            if (result3) {
+                                System.out.println("Successfully forwarded your email.\n");
+                                System.out.print("Code: " + EmailService.outputCode + "\n");
+                            } else {
+                                System.err.println("Failed to forward email. Please check the code or try again\n");
+                            }
+                        }
                     }
                 }
 

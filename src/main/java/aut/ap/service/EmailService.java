@@ -137,6 +137,57 @@ public class EmailService {
         }
     }
 
+    public static boolean forward(String code, String[] recipients, String senderEmail) {
+        try {
+            SingletonSessionFactory.get().inTransaction(session -> {
+                Email originalEmail = session.createQuery(
+                                "from Email where code = :givenCode", Email.class)
+                        .setParameter("givenCode", code)
+                        .getSingleResult();
+
+                if (originalEmail == null) {
+                    throw new RuntimeException("Original email not found for code: " + code);
+                }
+
+                User newSender = session.createQuery(
+                                "from User where email = :givenEmail", User.class)
+                        .setParameter("givenEmail", senderEmail)
+                        .getSingleResult();
+
+                String replySubject = "[Fw] " + originalEmail.getSubject();
+
+                String generatedCode;
+                do {
+                    generatedCode = generateRandomCode();
+                } while (codeExists(generatedCode));
+
+                Email forwardEmail = new Email(newSender, replySubject, originalEmail.getBody(), LocalDate.now(), generatedCode, originalEmail);
+                forwardEmail.setForward(true);
+                session.persist(forwardEmail);
+
+                for (String email : recipients) {
+                    User user = session.createQuery("from User where email = :givenemail", User.class)
+                            .setParameter("givenemail", email)
+                            .getSingleResult();
+
+                    EmailRecipient emailRecipient = new EmailRecipient(forwardEmail, user);
+                    session.persist(emailRecipient);
+                }
+                outputCode = generatedCode;
+            });
+            return true;
+        } catch (NoResultException e) {
+            System.err.println("User or email not found: " + e.getMessage());
+            return false;
+        } catch (jakarta.persistence.PersistenceException e) {
+            System.err.println("Database error: " + e.getMessage());
+            return false;
+        } catch (Exception e) {
+            System.err.println("Unexpected error: " + e.getMessage());
+            return false;
+        }
+    }
+
     private static String generateRandomCode() {
         final String characters = "abcdefghijklmnopqrstuvwxyz0123456789";
         final Random random = new Random();
