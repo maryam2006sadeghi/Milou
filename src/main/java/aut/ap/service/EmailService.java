@@ -123,6 +123,17 @@ public class EmailService {
                 throw new RuntimeException("You cannot read this email.");
             }
 
+            EmailRecipient recipientRecord = session.createQuery(
+                            "from EmailRecipient where email = :email and recipient = :recipient",
+                            EmailRecipient.class)
+                    .setParameter("email", originalEmail)
+                    .setParameter("recipient", user)
+                    .getSingleResult();
+
+            if (recipientRecord.getRecipient().getId() == user.getId()) {
+                recipientRecord.setRead(true);
+                session.merge(recipientRecord);
+            }
 
             System.out.println("Email:");
             System.out.println(originalEmail.getCode() + "\n");
