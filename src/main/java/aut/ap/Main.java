@@ -131,6 +131,11 @@ public class Main {
                                 case "s", "sent emails" -> {
                                     EmailService.sentEmails(email);
                                 }
+                                case "c", "Read by [C]ode" -> {
+                                    System.out.print("Code\n");
+                                    String code = scn.nextLine();
+                                    EmailService.getEmailByCode(code, email);
+                                }
                             }
                         }
                     }

@@ -7,7 +7,6 @@ import aut.ap.model.User;
 import jakarta.persistence.NoResultException;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
@@ -94,6 +93,46 @@ public class EmailService {
         for (Email unRead : AllEmails) {
             System.out.println("+" + unRead.toString());
         }
+    }
+
+    public static void getEmailByCode(String code, String email) {
+        SingletonSessionFactory.get().inTransaction(session -> {
+            Email originalEmail = session.createQuery(
+                            "from Email where code = :givenCode", Email.class)
+                    .setParameter("givenCode", code)
+                    .getSingleResult();
+
+            User user = session.createQuery("from User where email = :givenemail", User.class)
+                    .setParameter("givenemail", email)
+                    .getSingleResult();
+
+            if (originalEmail == null) {
+                throw new RuntimeException("Original email not found for code: " + code);
+            }
+
+            List<User> recipients = session.createQuery(
+                            "select u from User u " +
+                                    "join EmailRecipient er on er.recipient = u " +
+                                    "join Email e on e = er.email " +
+                                    "where e.code = :givenCode", User.class)
+                    .setParameter("givenCode", code)
+                    .getResultList();
+
+            if (user.getId() != originalEmail.getSender().getId() &&
+                    recipients.stream().noneMatch(r -> r.getId() == user.getId())) {
+                throw new RuntimeException("You cannot read this email.");
+            }
+
+
+            System.out.println("Email:");
+            System.out.println(originalEmail.getCode() + "\n");
+            System.out.print("Recipient(s): ");
+            for (User user1 : recipients) {
+                System.out.print(user1.getEmail() + ",");
+            }
+            System.out.println("\n" + originalEmail.getSubject() + "\n" + originalEmail.getDate());
+            System.out.println(originalEmail.getBody());
+        });
     }
 
     public static void sentEmails(String email) {
@@ -225,7 +264,7 @@ public class EmailService {
     }
 
     private static String generateRandomCode() {
-        final String characters = "abcdefghijklmnopqrstuvwxyz0123456789";
+        final String characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         final Random random = new Random();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 6; i++) {
