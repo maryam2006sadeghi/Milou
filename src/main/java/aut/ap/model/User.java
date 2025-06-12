@@ -63,9 +63,9 @@ public class User {
     @Override
     public String toString() {
         return "User{\n" +
-                "\tid=" + id + ", \n" +
-                "\tname=" + name + ", \n" +
-                "\temail='" + email + ", \n" +
+                "\tid='" + id + "'\n" +
+                "\tname='" + name + "'\n" +
+                "\temail='" + email + "'\n" +
                 '}';
     }
 }

@@ -126,9 +126,9 @@ public class Email {
     @Override
     public String toString() {
         return "Email{\n" +
-                "\tsender_id=" + sender.getId() + ", \n" +
-                "\tsubject='" + subject + ", \n" +
-                "\tcode='" + code + ", \n" +
+                "\tsender ='" + sender.getEmail() + "'\n" +
+                "\tsubject ='" + subject + "'\n" +
+                "\tcode='" + code + "'\n" +
                 '}';
     }
 }
