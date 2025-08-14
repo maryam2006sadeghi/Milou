@@ -1,16 +1,13 @@
 package aut.ap.model;
 
+import aut.ap.framework.IdEntity;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "emails")
-public class Email {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-
+public class Email extends IdEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name = "sender_id")
     private User sender;
@@ -49,14 +46,6 @@ public class Email {
         this.parentEmail = parentEmail;
         this.isReply = false;
         this.isForward = false;
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
     }
 
     public User getSender() {

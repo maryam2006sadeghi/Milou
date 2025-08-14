@@ -18,6 +18,10 @@ public class UserService {
                 return false;
             }
 
+            if (!email.endsWith("@Milou.com")) {
+                email = email + "@Milou.com";
+            }
+
             if (emailExists(email)) {
                 System.err.println("An account with this email already exists");
                 return false;
@@ -29,9 +33,7 @@ public class UserService {
             }
 
             User newUser = new User(name, email, password);
-            SingletonSessionFactory.get().inTransaction(session -> {
-                session.persist(newUser);
-            });
+            SingletonSessionFactory.get().inTransaction(session -> session.persist(newUser));
 
             System.out.print("Your new account is created. \nGo ahead and login!\n");
             return true;
