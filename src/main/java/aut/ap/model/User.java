@@ -1,14 +1,11 @@
 package aut.ap.model;
 
+import aut.ap.framework.IdEntity;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "users")
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-
+public class User extends IdEntity {
     @Basic(optional = false)
     private String name;
 
@@ -28,14 +25,6 @@ public class User {
         this.password = password;
     }
 
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
     public String getName() {
         return name;
     }
@@ -52,11 +41,11 @@ public class User {
         this.email = email;
     }
 
-    public String getPassword() {
+    private String getPassword() {
         return password;
     }
 
-    public void setPassword(String password) {
+    private void setPassword(String password) {
         this.password = password;
     }
 

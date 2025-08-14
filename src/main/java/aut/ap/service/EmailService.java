@@ -5,6 +5,7 @@ import aut.ap.model.Email;
 import aut.ap.model.EmailRecipient;
 import aut.ap.model.User;
 import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -50,7 +51,7 @@ public class EmailService {
         } catch (NoResultException e) {
             System.err.println("User not found: " + e.getMessage());
             return false;
-        } catch (jakarta.persistence.PersistenceException e) {
+        } catch (PersistenceException e) {
             System.err.println("Database error: " + e.getMessage());
             return false;
         } catch (Exception e) {
@@ -59,7 +60,7 @@ public class EmailService {
         }
     }
 
-    public static void unreadEmails(String email) {
+    public static List<Email> unreadEmails(String email) {
         List<Email> unReadEmails = SingletonSessionFactory.get().fromTransaction(session ->
                 session.createNativeQuery("select e.* from emails e " +
                                         "left join email_recipients er on e.id = er.email_id " +
@@ -75,9 +76,10 @@ public class EmailService {
         for (Email unRead : unReadEmails) {
             System.out.println("+" + unRead.toString());
         }
+        return unReadEmails;
     }
 
-    public static void AllEmails(String email) {
+    public static List<Email> AllEmails(String email) {
         List<Email> AllEmails = SingletonSessionFactory.get().fromTransaction(session ->
                 session.createNativeQuery("select e.* from emails e " +
                                         "left join email_recipients er on e.id = er.email_id " +
@@ -90,12 +92,19 @@ public class EmailService {
         );
 
         System.out.println("All Emails:");
-        for (Email unRead : AllEmails) {
-            System.out.println("+" + unRead.toString());
+        for (Email e : AllEmails) {
+            System.out.println("+" + e.toString());
         }
+        return AllEmails;
     }
 
-    public static void getEmailByCode(String code, String email) {
+    public static Email getEmailByCode(String code, String userEmail) {
+        final Email[] getEmail = {null};
+        if (!userEmail.endsWith("@Milou.com")) {
+            userEmail = userEmail + "@Milou.com";
+        }
+        String finalUserEmail = userEmail;
+
         SingletonSessionFactory.get().inTransaction(session -> {
             Email originalEmail = session.createQuery(
                             "from Email where code = :givenCode", Email.class)
@@ -103,7 +112,7 @@ public class EmailService {
                     .getSingleResult();
 
             User user = session.createQuery("from User where email = :givenemail", User.class)
-                    .setParameter("givenemail", email)
+                    .setParameter("givenemail", finalUserEmail)
                     .getSingleResult();
 
             if (originalEmail == null) {
@@ -115,24 +124,27 @@ public class EmailService {
                                     "join EmailRecipient er on er.recipient = u " +
                                     "join Email e on e = er.email " +
                                     "where e.code = :givenCode", User.class)
+
                     .setParameter("givenCode", code)
                     .getResultList();
 
-            if (user.getId() != originalEmail.getSender().getId() &&
-                    recipients.stream().noneMatch(r -> r.getId() == user.getId())) {
+            if (!user.getId().equals(originalEmail.getSender().getId()) &&
+                    recipients.stream().noneMatch(r -> r.getId().equals(user.getId()))) {
                 throw new RuntimeException("You cannot read this email.");
             }
 
-            EmailRecipient recipientRecord = session.createQuery(
+            List<EmailRecipient> recipientRecord = session.createQuery(
                             "from EmailRecipient where email = :email and recipient = :recipient",
                             EmailRecipient.class)
                     .setParameter("email", originalEmail)
                     .setParameter("recipient", user)
-                    .getSingleResult();
+                    .getResultList();
 
-            if (recipientRecord.getRecipient().getId() == user.getId()) {
-                recipientRecord.setRead(true);
-                session.merge(recipientRecord);
+            for ( EmailRecipient emailRecipient : recipientRecord){
+                if (user.equals(emailRecipient.getRecipient())) {
+                    emailRecipient.setRead(true);
+                    session.merge(emailRecipient);
+                }
             }
 
             System.out.println("Email:");
@@ -143,10 +155,13 @@ public class EmailService {
             }
             System.out.println("\n" + originalEmail.getSubject() + "\n" + originalEmail.getDate());
             System.out.println(originalEmail.getBody());
+            System.out.println();
+            getEmail[0] = originalEmail;
         });
+    return getEmail[0];
     }
 
-    public static void sentEmails(String email) {
+    public static List<Email> sentEmails(String email) {
         List<Email> sentEmails = SingletonSessionFactory.get().fromTransaction(session ->
                 session.createNativeQuery("select e.* from emails e " +
                                         "left join users u on e.sender_id = u.id " +
@@ -161,6 +176,7 @@ public class EmailService {
         for (Email unRead : sentEmails) {
             System.out.println("+" + unRead.toString());
         }
+        return sentEmails;
     }
 
     public static boolean reply(String senderEmail, String code, String body) {
@@ -214,7 +230,7 @@ public class EmailService {
         } catch (NoResultException e) {
             System.err.println("User or email not found: " + e.getMessage());
             return false;
-        } catch (jakarta.persistence.PersistenceException e) {
+        } catch (PersistenceException e) {
             System.err.println("Database error: " + e.getMessage());
             return false;
         } catch (Exception e) {
@@ -265,7 +281,7 @@ public class EmailService {
         } catch (NoResultException e) {
             System.err.println("User or email not found: " + e.getMessage());
             return false;
-        } catch (jakarta.persistence.PersistenceException e) {
+        } catch (PersistenceException e) {
             System.err.println("Database error: " + e.getMessage());
             return false;
         } catch (Exception e) {
