@@ -38,6 +38,10 @@ public class EmailService {
                 session.persist(newemail);
 
                 for (String email : recipients) {
+                    if (!email.endsWith("@Milou.com")) {
+                        email = email + "@Milou.com";
+                    }
+
                     User user = session.createQuery("from User where email = :givenemail", User.class)
                             .setParameter("givenemail", email)
                             .getSingleResult();
@@ -268,6 +272,9 @@ public class EmailService {
                 session.persist(forwardEmail);
 
                 for (String email : recipients) {
+                    if (!email.endsWith("@Milou.com")) {
+                        email = email + "@Milou.com";
+                    }
                     User user = session.createQuery("from User where email = :givenemail", User.class)
                             .setParameter("givenemail", email)
                             .getSingleResult();
